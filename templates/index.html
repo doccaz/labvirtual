@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+    {% block content %}
+        <div class="vm-container" style="overflow: auto; max-height: 80vh">
+            <div class="table-responsive">
+                <table class="table" id="domains">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Nome da VM</th>
+                            <th scope="col">Arquitetura</th>
+                            <th scope="col">Memória</th>
+                            <th scope="col">vCPUs</th>
+                            <th scope="col">Host Bridge</th>
+                            <th scope="col">Porta SPICE</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Console</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for domain in domain_data %}
+                        <tr id={{ domain.id }}>
+                            <th scope="row">{{ domain.id }}</th>
+                            <td> {{ domain.name }} </td>
+                            <td> {{ domain.arch }} </td>
+                            <td> {{ domain.memory }} </td>
+                            <td> {{ domain.vcpus }} </td>
+                            <td> {{ domain.bridge }} </td>
+                            <td> {{ domain.spiceport }} </td>
+			    {% if domain.state == "off" %}
+			    <td>
+			    <div class="popup btn btn-info" onclick="startVM('{{ domain.name }}')">turn on<span class="popuptext" id="myPopup">VM {{ domain.name }} started</span>
+			    </div>
+			    </td>
+			    <td>-- no console --</td>
+			    {% else %}
+			    <td> <div class="btn btn-success"> {{ domain.state }} </div></td>
+			    <td> <div class="btn btn-link"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port=1{{ domain.spiceport }}" target='_blank'>console</a></div></td>
+			    {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endblock %}
