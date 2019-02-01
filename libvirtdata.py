@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import libvirt
 import sys
+import logging
 from pprint import pprint
 from lxml import etree
 
@@ -34,7 +35,7 @@ class DomainQuery():
         self.conn = None
 
         # connect to the hypervisor
-        self.conn = libvirt.openReadOnly(conn_uri)
+        self.conn = libvirt.open(conn_uri)
         if self.conn == None:
             print('Falha ao conectar ao hypervisor')
             return False
@@ -61,6 +62,11 @@ class DomainQuery():
             dom_xml = etree.fromstring(xmldesc)
             #print("dom_xml = [%s]" % dom_xml)
             dom_name = dom.name()
+            try:
+                dom_nics = dom.interfaceAddresses(1)
+            except libvirt.libvirtError as e:
+                dom_nics = "<unknown>"
+                print('error while getting interface info for VM %s: %s' % (dom_name, e))
             dom_state = dom.state()[0]
             dom_arch = self.getAttribute(dom_xml,'os/type', 'arch')
             dom_memory_size=int(dom.maxMemory())/1024
@@ -76,6 +82,7 @@ class DomainQuery():
             domain_data['id'] = dom.ID()
             domain_data['name'] = dom_name
             domain_data['arch'] = dom_arch
+            domain_data['nics'] = dom_nics
             domain_data['memory'] = dom_memory_size
             domain_data['vcpus'] = dom_vcpus
             domain_data['state'] = self.domainStates[int(dom_state)]
@@ -99,5 +106,5 @@ class DomainQuery():
         for d in self.domain_db:
             if d['name'] == vm_name:
                 print('starting VM: %s' % vm_name)
-                d['object'].create()
+                print('create() = %d' % d['object'].create())
         return

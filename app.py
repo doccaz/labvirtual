@@ -1,10 +1,10 @@
 import os
 import json
+import logging
 from flask import Flask, request, jsonify, render_template, redirect, request
 from datetime import datetime
 from pprint import pprint
 from libvirtdata import DomainQuery
-
 app = Flask(__name__, instance_relative_config=True)
 
 @app.route('/')
@@ -24,6 +24,7 @@ def startvm():
     if vm_name is None:
         return render_template('startvm.html', error='VM not specified')
     else:
+        logging.warning('VM %s is turned off, turning it on' % vm_name)
         d.startVM(vm_name)
         return render_template('startvm.html', error='%s started' % vm_name)
 

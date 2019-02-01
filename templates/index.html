@@ -11,6 +11,7 @@
                             <th scope="col">Arquitetura</th>
                             <th scope="col">Memória</th>
                             <th scope="col">vCPUs</th>
+                            <th scope="col">Rede</th>
                             <th scope="col">Host Bridge</th>
                             <th scope="col">Porta SPICE</th>
                             <th scope="col">Status</th>
@@ -25,6 +26,7 @@
                             <td> {{ domain.arch }} </td>
                             <td> {{ domain.memory }} </td>
                             <td> {{ domain.vcpus }} </td>
+                            <td> {{ domain.nics }} </td>
                             <td> {{ domain.bridge }} </td>
                             <td> {{ domain.spiceport }} </td>
 			    {% if domain.state == "off" %}
