@@ -37,7 +37,8 @@
 			    <td>-- no console --</td>
 			    {% else %}
 			    <td> <div class="btn btn-success"> {{ domain.state }} </div></td>
-			    <td> <div class="btn btn-link"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port=1{{ domain.spiceport }}" target='_blank'>console</a></div></td>
+			    <td> <div class="btn btn-link"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port=1{{ domain.spiceport }}&ip_addr={{ domain.ip_address }}" target='_blank'>console</a></div></td>
+			    <td> <div class="popup btn btn-info" onclick="resetVM('{{ domain.name }}')">reset<span class="popuptext" id="myPopup">VM {{ domain.name }} reset</span></td>
 			    {% endif %}
                         </tr>
                     {% endfor %}

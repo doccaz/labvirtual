@@ -1,6 +1,5 @@
 import os
 import json
-import logging
 from flask import Flask, request, jsonify, render_template, redirect, request
 from datetime import datetime
 from pprint import pprint
@@ -19,15 +18,35 @@ def index():
 
 @app.route('/startvm')
 def startvm():
-    d = DomainQuery()
+    dom = DomainQuery()
+    domain_db = dom.get_data()
     vm_name = request.args.get('name')
     if vm_name is None:
         return render_template('startvm.html', error='VM not specified')
     else:
-        logging.warning('VM %s is turned off, turning it on' % vm_name)
-        d.startVM(vm_name)
+        DomainQuery.log('VM %s is turned off, turning it on' % vm_name)
+        for d in domain_db:
+            #DomainQuery.log('domain: %s' % str(d))
+            if d['name'] == vm_name:
+                DomainQuery.log('create() = %d' % d['object'].create())
         return render_template('startvm.html', error='%s started' % vm_name)
 
+@app.route('/restartvm')
+def restartvm():
+    dom = DomainQuery()
+    domain_db = dom.get_data()
+    vm_name = request.args.get('name')
+    if vm_name is None:
+        return render_template('restartvm.html', error='VM not specified')
+    else:
+        DomainQuery.log('Restarting VM: %s' % vm_name)
+        for d in domain_db:
+            #DomainQuery.log('domain: %s' % str(d))
+            if d['name'] == vm_name:
+                DomainQuery.log('reset() = %d' % d['object'].reset())
+        return render_template('restartvm.html', error='%s reset' % vm_name)
+    
+    
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     DomainQuery.close()
