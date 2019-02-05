@@ -2,11 +2,15 @@
 
     body,html {
         height: 100%;
+	background:#5073C0;
+	color:#fffffe;
+
     }
 
     .vm-container {
         margin: 0px;
         padding: px;
+	background:rgba(0, 56, 168, 0.2);
     }
 
 /* Popup container - can be anything you want */
@@ -75,4 +79,9 @@ div.bannerbackground {
     top: 0px;
     left: 0px;
     width: 100%;
+ }
+
+ #domains {
+	 overflow: hidden;
+	 width: 100%;
  }

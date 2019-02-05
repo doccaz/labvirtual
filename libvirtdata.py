@@ -72,22 +72,17 @@ class DomainQuery():
             dom_xml = etree.fromstring(xmldesc)
             #print("dom_xml = [%s]" % dom_xml)
             dom_name = dom.name()
-            try:
-                dom_nics = dom.interfaceAddresses(1)
-            except libvirt.libvirtError as e:
-                dom_nics = "<unknown>"
-                DomainQuery.log('error while getting interface info for VM %s: %s' % (dom_name, e))
             dom_state = dom.state()[0]
             dom_arch = self.getAttribute(dom_xml,'os/type', 'arch')
             dom_memory_size=int(dom.maxMemory())/1024
             dom_host_bridge = self.getAttribute(dom_xml, "devices/interface/source[@mode='bridge']", 'dev')
             dom_spiceport = self.getAttribute(dom_xml, "devices/graphics[@type='spice']", 'port')
-            dom_interfaces = ''
+            dom_nics = 'unknown'
             if self.domainStates[int(dom_state)] == "running":
                 dom_vcpus = len(dom.vcpus()[0])
                 ifaces = dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE)
                 if (ifaces == None):
-                    dom_interfaces = 'unknown'
+                    dom_nics = 'none'
                 else:
                     iplist = ''
                     if ifaces:
@@ -96,10 +91,13 @@ class DomainQuery():
                                 for addr in val['addrs']:
                                     iplist=iplist + ' ' + addr['addr'] 
 
-                dom_interfaces = iplist
+                if iplist == '':
+                    dom_nics = 'n/a'
+                else:
+                    dom_nics = iplist
             else:
                 dom_vcpus = 0
-                dom_interfaces = 'not available'
+                dom_nics = 'n/a'
 
             domain_data = {}
             domain_data['id'] = dom.ID()
@@ -112,7 +110,6 @@ class DomainQuery():
             domain_data['bridge'] = dom_host_bridge
             domain_data['spiceport'] = dom_spiceport
             domain_data['object'] = dom
-            domain_data['ip_address'] = dom_interfaces
             #    pprint(domain_data)
 
 
