@@ -1,10 +1,19 @@
 import os
 import json
+import gettext
 from flask import Flask, request, jsonify, render_template, redirect, request
 from datetime import datetime
 from pprint import pprint
 from libvirtdata import DomainQuery
 app = Flask(__name__, instance_relative_config=True)
+
+# tranlation support
+try:
+    import gettext
+    gettext.install('labvirtual', '/usr/share/locale')
+except FileNotFoundError as e:
+    DomainQuery.log("no translation file available")
+
 
 @app.route('/')
 def index():
@@ -12,7 +21,7 @@ def index():
     d = DomainQuery()
     domain_db = d.get_data()
 
-    lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M %p')
+    lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M:%S %p')
     return render_template('index.html', domain_data=domain_db, timestamp=lastUpdated)
 
 

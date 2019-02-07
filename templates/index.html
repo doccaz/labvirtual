@@ -29,7 +29,7 @@
 					<td> {{ domain.vcpus }} </td>
 					<td> {{ domain.nics }} </td>
 					<td> {{ domain.bridge }} </td>
-					<td> 1{{ domain.spiceport }} </td>
+					<td> {{ domain.spiceport }} </td>
 					{% if domain.state == "off" %}
 					<td>
 						<div class="popup btn btn-info" onclick="startVM('{{ domain.name }}')">turn on<span class="popuptext" id="myPopup">VM {{ domain.name }} started</span>
@@ -39,7 +39,11 @@
 					<td>-- no action --</td>
 					{% else %}
 					<td> <div class="btn btn-success"> {{ domain.state }} </div></td>
-					<td> <div class="btn btn-warning"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port=1{{ domain.spiceport }}&ip_addr={{ domain.nics }}&vm_name={{ domain.name }}&arch={{ domain.arch }}" target='_blank'>console</a></div></td>
+					{% if domain.in_use_by != "" %}
+					<td> <div class="btn btn-warning">in use ({{ domain.in_use_by }})</div></td>
+					{% else %}
+					<td> <div class="btn btn-warning"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port={{ domain.spiceport }}&ip_addr={{ domain.nics }}&vm_name={{ domain.name }}&arch={{ domain.arch }}" target='_blank'>console</a></div></td>
+					{% endif %}
 					<td> <div class="popup btn btn-info" onclick="resetVM('{{ domain.name }}')">reset<span class="popuptext" id="myPopup">VM {{ domain.name }} reset</span></td>
 					{% endif %}
 				</tr>

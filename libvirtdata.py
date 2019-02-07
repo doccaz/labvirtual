@@ -2,6 +2,10 @@
 import libvirt
 import sys
 import syslog
+import re
+import subprocess
+from subprocess import check_output, CalledProcessError
+from subprocess import PIPE
 from pprint import pprint
 from lxml import etree
 
@@ -14,7 +18,7 @@ class DomainQuery():
         4:'shutting down',
         5:'off',
         6:'crashed',
-        7:'suspended by power management'
+        7:'suspended by power management',
         }
 
     ''' 
@@ -54,6 +58,33 @@ class DomainQuery():
 
     def __repr__(self):
         return '<DomainQuery: %s>' % (self.domain_db)
+
+    def getVMOwner(vm_name, port):
+        owner = ''
+
+        cmd_list = ['ss', '-tn']
+        try:
+            cmd_result = subprocess.check_output(cmd_list)
+        except CalledProcessError as e:
+            DomainQuery.log('Error while determining VM owner')
+
+        test_str = cmd_result.decode('utf-8')
+        regex = r"^ESTAB.*\ \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:1" + port + ".*\ (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+        matches = re.finditer(regex, test_str, re.MULTILINE)
+
+        for matchNum, match in enumerate(matches, start=1):
+            #print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
+            for groupNum in range(0, len(match.groups())):
+                groupNum = groupNum + 1
+                if match.group(groupNum) != "127.0.0.1" and match.group(groupNum) != "172.18.88.44":
+                    owner = str(match.group(groupNum))
+                #print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
+
+        if owner != "":
+            DomainQuery.log('VM [%s] is in use by IP [%s]' % (vm_name, owner))
+            return owner
+        return ''
+
 
     def get_data(self):
         # get a list of the defined domains(VMs)
@@ -108,12 +139,17 @@ class DomainQuery():
             domain_data['vcpus'] = dom_vcpus
             domain_data['state'] = self.domainStates[int(dom_state)]
             domain_data['bridge'] = dom_host_bridge
-            domain_data['spiceport'] = dom_spiceport
+            domain_data['spiceport'] = "1" + dom_spiceport
             domain_data['object'] = dom
+
+            # check if the websocket port is in use
+            if dom_spiceport != '<unknown>':
+                domain_data['in_use_by'] = DomainQuery.getVMOwner(dom_name, dom_spiceport)
+            else:
+                domain_data['in_use_by'] = ''
+
             #    pprint(domain_data)
 
-
-            
             self.domain_db.append(domain_data)
            # pprint(self.domain_db)
 
@@ -124,5 +160,4 @@ class DomainQuery():
         syslog.closelog()
         # libvirt.connectClose(self.conn)
         return
-
 
