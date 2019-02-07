@@ -32,12 +32,12 @@
 					<td> {{ domain.bridge }} </td>
 					<td> {{ domain.spiceport }} </td>
 					{% if domain.state == "off" %}
+					<td><div class="btn btn-danger">off</div></td>
+					<td>-- no console --</td>
 					<td>
 						<div class="popup btn btn-info" onclick="startVM('{{ domain.name }}')">turn on<span class="popuptext" id="myPopup">VM {{ domain.name }} started</span>
 						</div>
 					</td>
-					<td>-- no console --</td>
-					<td>-- no action --</td>
 					{% else %}
 					<td> <div class="btn btn-success"> {{ domain.state }} </div></td>
 					{% if domain.in_use_by != "" %}
