@@ -3,27 +3,28 @@
 {% block content %}
 <div class="vm-container" style="overflow: auto; max-height: 85vh">
 	<div class="table-responsive">
+		<input type="text" id="search" onkeyup="tableLookup()" placeholder="Search...">
 		<table class="table table-hover table-striped text-center" id="domains">
 			<thead>
 				<tr>
-					<th scope="col">ID</th>
-					<th scope="col">Nome da VM</th>
-					<th scope="col">Arquitetura</th>
-					<th scope="col">Memória</th>
-					<th scope="col">vCPUs</th>
-					<th scope="col">Rede</th>
-					<th scope="col">Host Bridge</th>
-					<th scope="col">Porta SPICE</th>
-					<th scope="col">Status</th>
-					<th scope="col">Console</th>
+					<th scope="col" onclick="sortTable(0)">Nome da VM</th>
+					<th scope="col" onclick="sortTable(1)">ID</th>
+					<th scope="col" onclick="sortTable(2)">Arquitetura</th>
+					<th scope="col" onclick="sortTable(3)">Memória</th>
+					<th scope="col" onclick="sortTable(4)">vCPUs</th>
+					<th scope="col" onclick="sortTable(5)">Rede</th>
+					<th scope="col" onclick="sortTable(6)">Host Bridge</th>
+					<th scope="col" onclick="sortTable(7)">Porta SPICE</th>
+					<th scope="col" onclick="sortTable(8)">Status</th>
+					<th scope="col" onclick="sortTable(9)">Console</th>
 					<th scope="col">A&ccedil;&otilde;es</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for domain in domain_data %}
-				<tr id={{ domain.id }}>
-					<th scope="row">{{ domain.id }}</th>
+					<tr id={{ domain.name }}>
 					<td> {{ domain.name }} </td>
+					<td> {{ domain.id }} </td>
 					<td> {{ domain.arch }} </td>
 					<td> {{ domain.memory }} </td>
 					<td> {{ domain.vcpus }} </td>

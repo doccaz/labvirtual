@@ -111,21 +111,17 @@ class DomainQuery():
             dom_nics = 'unknown'
             if self.domainStates[int(dom_state)] == "running":
                 dom_vcpus = len(dom.vcpus()[0])
-                ifaces = dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE)
+                try:
+                    ifaces = dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT)
+                except libvirt.libvirtError as e:
+                    ifaces = None
+                    DomainQuery.log('VM %s does not have a QEMU agent installed' % dom_name)
+
                 if (ifaces == None):
                     dom_nics = 'none'
                 else:
-                    iplist = ''
-                    if ifaces:
-                        for (name, val) in ifaces.iteritems():
-                            if val['addrs']:
-                                for addr in val['addrs']:
-                                    iplist=iplist + ' ' + addr['addr'] 
-
-                if iplist == '':
-                    dom_nics = 'n/a'
-                else:
-                    dom_nics = iplist
+                    DomainQuery.log('VM %s does have a QEMU agent installed' % dom_name)
+                    dom_nics = ifaces['eth0']['addrs'][0]['addr'] + '/' + str(ifaces['eth0']['addrs'][0]['prefix'])
             else:
                 dom_vcpus = 0
                 dom_nics = 'n/a'
@@ -139,7 +135,11 @@ class DomainQuery():
             domain_data['vcpus'] = dom_vcpus
             domain_data['state'] = self.domainStates[int(dom_state)]
             domain_data['bridge'] = dom_host_bridge
-            domain_data['spiceport'] = "1" + dom_spiceport
+            if dom_spiceport != "<unknown>":
+                domain_data['spiceport'] = "1" + dom_spiceport
+            else:
+                domain_data['spiceport']  = 'n/a'
+
             domain_data['object'] = dom
 
             # check if the websocket port is in use
