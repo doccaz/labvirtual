@@ -4,6 +4,7 @@ import sys
 import syslog
 import re
 import subprocess
+import json
 from subprocess import check_output, CalledProcessError
 from subprocess import PIPE
 from pprint import pprint
@@ -108,7 +109,9 @@ class DomainQuery():
             dom_memory_size=int(dom.maxMemory())/1024
             dom_host_bridge = self.getAttribute(dom_xml, "devices/interface/source[@mode='bridge']", 'dev')
             dom_spiceport = self.getAttribute(dom_xml, "devices/graphics[@type='spice']", 'port')
+            dom_guestagentport = self.getAttribute(dom_xml, "devices/channel/target[@name='org.qemu.guest_agent.0']", 'port')
             dom_nics = 'unknown'
+            dom_type = 'unknown'
             if self.domainStates[int(dom_state)] == "running":
                 dom_vcpus = len(dom.vcpus()[0])
                 try:
@@ -121,11 +124,26 @@ class DomainQuery():
                     dom_nics = 'none'
                 else:
                     DomainQuery.log('VM %s does have a QEMU agent installed' % dom_name)
-                    dom_nics = ifaces['eth0']['addrs'][0]['addr'] + '/' + str(ifaces['eth0']['addrs'][0]['prefix'])
+                    try:
+                        # if it's Linux, go for eth0
+                        dom_nics = ifaces['eth0']['addrs'][0]['addr'] + '/' + str(ifaces['eth0']['addrs'][0]['prefix'])
+                        dom_type = "linux"
+                    except KeyError as e:
+                        # else it might be a windows VM, try the "Local Connection" interfaces
+                        dom_type = "windows"
+                        for nic in ifaces:
+                            if 'Local' in nic:
+                                for ip in ifaces[nic]['addrs']:
+                                    if ip['type'] == 0:
+                                        dom_nics = ip['addr'] + '/' + str(ip['prefix'])
             else:
                 dom_vcpus = 0
                 dom_nics = 'n/a'
 
+
+            # determine system version
+            dom_osinfo = DomainQuery.getOSVersion(dom_name, dom_type)
+                
             domain_data = {}
             domain_data['id'] = dom.ID()
             domain_data['name'] = dom_name
@@ -140,6 +158,8 @@ class DomainQuery():
             else:
                 domain_data['spiceport']  = 'n/a'
 
+            domain_data['type'] = dom_type
+            domain_data['osinfo'] = dom_osinfo
             domain_data['object'] = dom
 
             # check if the websocket port is in use
@@ -158,6 +178,83 @@ class DomainQuery():
     def close():
         DomainQuery.log('ending libvirt session')
         syslog.closelog()
-        # libvirt.connectClose(self.conn)
+        #libvirt.connectClose(self.conn)
         return
 
+    def getOSVersion(vm_name, vm_type):
+        osInfoCMD = {
+                "execute":"guest-get-osinfo"
+                }
+
+        if vm_type == "windows":
+            pprint(json.dumps(osInfoCMD))
+            cmd_list = ['virsh', 'qemu-agent-command', vm_name, json.dumps(osInfoCMD)]
+            try:
+                cmd_result = subprocess.check_output(cmd_list)
+            except CalledProcessError as e:
+                DomainQuery.log('Error while determining OS info')
+                return "unknown"
+        return "windows"
+
+        if vm_type == "linux":
+            versionInfo = DomainQuery.readFileFromVM(vm_name, "/etc/os-release")
+            pprint(versionInfo)
+        return "linux"
+
+        
+    def readFileFromVM(vm_name, filename):
+        file_handle = -1
+        fileOpenCMD = {
+                "execute":"guest-file-open",
+                "arguments":{
+                    "path":"%s" % filename
+                    }
+                }
+
+        fileReadCMD = {
+                "execute":"guest-file-read",
+                "arguments":{
+                    "handle": file_handle, 
+                    "count":16384
+                    }
+                }
+        
+        fileCloseCMD = {
+                "execute":"guest-file-close", 
+                "arguments":{
+                    "handle":file_handle
+                    }
+                }
+
+        # get the file handle first
+        cmd_list = ['virsh', 'qemu-agent-command', vm_name, json.dumps(fileOpenCMD)]
+        try:
+            cmd_result = subprocess.check_output(cmd_list)
+        except CalledProcessError as e:
+            DomainQuery.log('Error while opening file from VM')
+            return ""
+
+        file_handle = json.loads(cmd_result)['return']
+
+        if file_handle <= 0:
+            DomainQuery.log('Invalid handle while opening file from VM')
+            return ""
+
+        # we have a valid file handle, let's get the contents
+        cmd_list = ['virsh', 'qemu-agent-command', vm_name, json.dumps(fileReadCMD)]
+        try:
+            cmd_result = subprocess.check_output(cmd_list)
+        except CalledProcessError as e:
+            DomainQuery.log('Error while getting file contents from VM')
+            return ""
+        
+        file_contents = json.loads(cmd_result)['return']['buf-b64']
+        file_size = json.loads(cmd_result)['return']['count']
+        DomainQuery.log("Received file data (%d bytes): [%s]" % (file_size, file_contents))
+
+      #  {"return":{"count":730,"buf-b64":"IyBHZXJhZG8gcG9yIC0gKHZpYSBCQnJleHh0b29scyAxLjAtc3ZuMzQxMjgpCiMgMjAxOS0wMi0wMVQxMjo1MTo1Mi4wNTU1MzlaClNFVFVQX0RBVEU9IjAyLzAxLzE5IDEwOjUxOjEwIgpQUkVGSVhPPSI3OTk3IgpUQUJTUlY9InRhYnNydjAxLmRmLmJiIgpQRVJGSUw9IlRNRi1BRyIKSU5TVEFMTElEPSIzNzQ4OTQ3MCIKU0VSVkVSPSIxMC4xMS4xNzMuMSIKU0VRVUVOQ0lBTD0iMDY5IgpSRUNPTkZJRz0iMCIKSURfUkVHSVNURVI9IjIwMzAzMDMiClVGPSJERiIKTlVNRVJPX1NPTD0iNTkwMDAiClJFR0lTVEVSX0RBVEU9IjctMi0yMDE5IgpTVUJBR0VOQ0lBPSIwMiIKR0FURVdBWV9JUD0iMTAuMTEuMTczLjI1NCIKTEFCT1JBVE9SSU89IjAiCkZPUk5FQ0VET1I9IlRNRi1BRyIKU1JWX0ROU18xPSIxMC4xMS4xNzMuMSIKU1JWX0ROU18yPSIxMC44LjQuMSIKSFdDT05GSUc9IjAiClNSVl9ETlNfMz0iMC4wLjAuMCIKTVVOSUNJUElPPSJCUkFTSUxJQSIKRE9NQUlOPSJhZ2U3OTk3LmJiIgpNQUM9IjUyNTQwMGZlNmJlNCIKSE9TVE5BTUU9IlRGNzk5NzAyMDY5IgpOSUM9ImV0aDAiCk5PTUVfREVQRU49IkFHLiBURVNURSBTT0wgNzk5NyBTQjIiCkJFTV9OVU1FUk89IjEyODYwNDM1NTkwMDA2IgpNT0RFTE89IlRNRi1BRyIKVkVSU0lPTj0iMjAxNzA1MjQwNzAyIgpHQVRFV0FZPSIxMC4xMS4xNzMuMjU0IgpIT1NUSVA9IjEwLjExLjE3My4xMTUiCk1BU0s9IjI1NS4yNTUuMjU1LjAiCg==","eof":true}}
+
+        decoded_file = base64.b64decode(file_contents)
+        DomainQuery.log("Decoded content: [%s]" % (decoded_file))
+
+        return ""
