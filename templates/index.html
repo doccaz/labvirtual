@@ -8,7 +8,7 @@
 			<thead>
 				<tr>
 					<th scope="col" onclick="sortTable(0)">Nome da VM</th>
-					<th scope="col" onclick="sortTable(1)">ID</th>
+					<th scope="col" onclick="sortTable(1)">Sistema</th>
 					<th scope="col" onclick="sortTable(2)">Arquitetura</th>
 					<th scope="col" onclick="sortTable(3)">Memória</th>
 					<th scope="col" onclick="sortTable(4)">vCPUs</th>
@@ -24,7 +24,7 @@
 				{% for domain in domain_data %}
 					<tr id={{ domain.name }}>
 					<td> {{ domain.name }} </td>
-					<td> {{ domain.id }} </td>
+					<td> {{ domain.osinfo }} </td>
 					<td> {{ domain.arch }} </td>
 					<td> {{ domain.memory }} </td>
 					<td> {{ domain.vcpus }} </td>
