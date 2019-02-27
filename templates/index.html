@@ -7,14 +7,14 @@
 		<table class="table table-hover table-striped text-center" id="domains">
 			<thead>
 				<tr>
-					<th scope="col" onclick="sortTable(0)">Nome da VM</th>
-					<th scope="col" onclick="sortTable(1)">Sistema</th>
-					<th scope="col" onclick="sortTable(2)">Arquitetura</th>
-					<th scope="col" onclick="sortTable(3)">Memória</th>
-					<th scope="col" onclick="sortTable(4)">vCPUs</th>
-					<th scope="col" onclick="sortTable(5)">Rede</th>
-					<th scope="col" onclick="sortTable(6)">Host Bridge</th>
-					<th scope="col" onclick="sortTable(7)">Porta SPICE</th>
+					<th scope="col" onclick="sortTable(0)">Perfil</th>
+					<th scope="col" onclick="sortTable(1)">Nome da VM</th>
+					<th scope="col" onclick="sortTable(2)">Sistema</th>
+					<th scope="col" onclick="sortTable(3)">Arquitetura</th>
+					<th scope="col" onclick="sortTable(4)">Data Instala&ccedil;&atilde;o</th>
+					<th scope="col" onclick="sortTable(5)">Memória</th>
+					<th scope="col" onclick="sortTable(6)">vCPUs</th>
+					<th scope="col" onclick="sortTable(7)">Rede</th>
 					<th scope="col" onclick="sortTable(8)">Status</th>
 					<th scope="col" onclick="sortTable(9)">Console</th>
 					<th scope="col">A&ccedil;&otilde;es</th>
@@ -23,14 +23,14 @@
 			<tbody>
 				{% for domain in domain_data %}
 					<tr id={{ domain.name }}>
+					<td> {{ domain.perfil }} </td>
 					<td> {{ domain.name }} </td>
 					<td> {{ domain.osinfo }} </td>
 					<td> {{ domain.arch }} </td>
+					<td> {{ domain.install_date }} </td>
 					<td> {{ domain.memory }} </td>
 					<td> {{ domain.vcpus }} </td>
 					<td> {{ domain.nics }} </td>
-					<td> {{ domain.bridge }} </td>
-					<td> {{ domain.spiceport }} </td>
 					{% if domain.state == "off" %}
 					<td><div class="btn btn-danger">off</div></td>
 					<td>-- no console --</td>

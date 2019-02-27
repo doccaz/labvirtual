@@ -124,7 +124,7 @@ class DomainQuery():
                 except libvirt.libvirtError as e:
                     ifaces = None
                     dom_agent = False
-                    DomainQuery.log('VM %s does not have a QEMU agent installed' % dom_name)
+                    #DomainQuery.log('VM %s does not have a QEMU agent installed' % dom_name)
 
                 if (ifaces == None):
                     dom_nics = 'none'
@@ -151,8 +151,13 @@ class DomainQuery():
             # determine system version
             if dom_agent:
                 dom_osinfo = DomainQuery.getOSVersion(dom_name, dom_type)
+                dom_install_date = DomainQuery.getConfigValue(dom_name, '/etc/BBconfig.conf', r"SETUP_DATE=\"(.*)\"")
+                dom_perfil = DomainQuery.getConfigValue(dom_name, '/etc/BBconfig.conf', r"PERFIL=\"(.*)\"")
             else:
                 dom_osinfo = 'n/a'
+                dom_install_date = 'n/a'
+                dom_perfil = 'n/a'
+
 
             domain_data = {}
             domain_data['id'] = dom.ID()
@@ -177,6 +182,8 @@ class DomainQuery():
             domain_data['type'] = dom_type
             domain_data['osinfo'] = dom_osinfo
             domain_data['agent'] = dom_agent
+            domain_data['install_date'] = dom_install_date
+            domain_data['perfil'] = dom_perfil
             domain_data['object'] = dom
 
             # check if the websocket port is in use
@@ -227,7 +234,70 @@ class DomainQuery():
             else:
                 return linux_id
         return "unknown OS" 
+    
+
+    def guestExec(vm_name, cmd, args):
+        execCMD = {
+                "execute":"guest-exec",
+                "arguments":{  
+                    "path": cmd,
+                    "arg": args,
+                    "capture-output":True
+                    }
+                }
         
+        try:
+            cmd_list = ['virsh', '-c', 'qemu:///system', 'qemu-agent-command', vm_name, json.dumps(execCMD)]
+            cmd_result = subprocess.check_output(cmd_list)
+        except CalledProcessError as e:
+            DomainQuery.log('Error executing command: %s' % e)
+            return -1
+
+        pid = json.loads(cmd_result)['return']['pid']
+        DomainQuery.log('Command execution returned PID=%s' % pid)
+
+        resultCMD = {  
+                "execute":"guest-exec-status",
+                "arguments":{  
+                    "pid":pid
+                    }
+                }
+        try:
+            cmd_list = ['virsh', '-c', 'qemu:///system', 'qemu-agent-command', vm_name, json.dumps(resultCMD)]
+            cmd_result = subprocess.check_output(cmd_list)
+            #DomainQuery.log('command output: %s' % cmd_result)
+        except CalledProcessError as e:
+            DomainQuery.log('Error executing command: %s' % e)
+            return (-1, '')
+        ret = json.loads(cmd_result)['return']['exitcode']
+        DomainQuery.log('Command execution returned RC=%s' % ret)
+
+        output = json.loads(cmd_result)['return']['out-data']
+        #DomainQuery.log("Command output: [%s]" % output)
+
+        decoded_output = base64.b64decode(output).decode("utf-8")
+        #DomainQuery.log("Decoded output: [%s]" % (decoded_output))
+        return (ret, decoded_output)
+        
+
+    def getConfigValue(vm_name, filename, regex):
+        configInfo = DomainQuery.readFileFromVM(vm_name, filename)
+        config_value = ''
+        if configInfo:
+            configInfo = configInfo.decode("utf-8")
+            matches = re.finditer(regex, configInfo, re.MULTILINE)
+            for matchNum, match in enumerate(matches, start=1):
+                config_value = match.group(1)
+            DomainQuery.log('returned value = %s' % config_value)
+            
+        if config_value == '':
+            return "n/a"
+        else:
+            return config_value
+        
+        return "n/a"
+
+
     def readFileFromVM(vm_name, filename):
         file_handle = -1
         fileOpenCMD = {
@@ -278,15 +348,16 @@ class DomainQuery():
         
         file_contents = json.loads(cmd_result)['return']['buf-b64']
         file_size = json.loads(cmd_result)['return']['count']
-        DomainQuery.log("Received file data (%d bytes): [%s]" % (file_size, file_contents))
+        DomainQuery.log("Received file %s (%d bytes)" % (filename, file_size))
 
         decoded_file = base64.b64decode(file_contents)
-        DomainQuery.log("Decoded content: [%s]" % (decoded_file))
+        #DomainQuery.log("Decoded content: [%s]" % (decoded_file))
 
         # now we need to close the file handle
         cmd_list = ['virsh', '-c', 'qemu:///system', 'qemu-agent-command', vm_name, json.dumps(fileCloseCMD)]
         try:
             cmd_result = subprocess.check_output(cmd_list)
+            #DomainQuery.log("Close file handle %s: %s" % (file_handle, json.loads(cmd_result)['return']))
         except CalledProcessError as e:
             DomainQuery.log('Error while closing file handle: %s' % e)
 
