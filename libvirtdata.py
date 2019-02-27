@@ -116,6 +116,7 @@ class DomainQuery():
             dom_guestagentport = self.getAttribute(dom_xml, "devices/channel/target[@name='org.qemu.guest_agent.0']", 'port')
             dom_nics = 'unknown'
             dom_type = 'unknown'
+            dom_agent = False
             if self.domainStates[int(dom_state)] == "running":
                 dom_vcpus = len(dom.vcpus()[0])
                 try:
@@ -212,11 +213,14 @@ class DomainQuery():
             return json.loads(cmd_result)['return']['pretty-name']
 
         if vm_type == "linux":
-            versionInfo = DomainQuery.readFileFromVM(vm_name, "/etc/os-release").decode("utf-8")
-            regex = r"PRETTY_NAME=\"(.*)\""
-            matches = re.finditer(regex, versionInfo, re.MULTILINE)
-            for matchNum, match in enumerate(matches, start=1):
-                linux_id = match.group(1)
+            versionInfo = DomainQuery.readFileFromVM(vm_name, "/etc/os-release")
+            linux_id = ''
+            if versionInfo:
+                versionInfo = versionInfo.decode("utf-8")
+                regex = r"PRETTY_NAME=\"(.*)\""
+                matches = re.finditer(regex, versionInfo, re.MULTILINE)
+                for matchNum, match in enumerate(matches, start=1):
+                    linux_id = match.group(1)
 
             if linux_id == '':
                 return "unknown linux"
@@ -278,5 +282,12 @@ class DomainQuery():
 
         decoded_file = base64.b64decode(file_contents)
         DomainQuery.log("Decoded content: [%s]" % (decoded_file))
+
+        # now we need to close the file handle
+        cmd_list = ['virsh', '-c', 'qemu:///system', 'qemu-agent-command', vm_name, json.dumps(fileCloseCMD)]
+        try:
+            cmd_result = subprocess.check_output(cmd_list)
+        except CalledProcessError as e:
+            DomainQuery.log('Error while closing file handle: %s' % e)
 
         return decoded_file
