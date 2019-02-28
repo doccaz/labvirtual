@@ -328,7 +328,7 @@ class DomainQuery():
                 "execute":"guest-file-read",
                 "arguments":{
                     "handle": file_handle, 
-                    "count":32768
+                    "count":65535
                     }
                 }
         
