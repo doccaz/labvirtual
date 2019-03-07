@@ -76,7 +76,7 @@ def do_admin_login():
         session['username'] = request.form['username']
     else:
         flash('wrong password!')
-    return index()
+    return redirect('/labvirtual', code=302)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
