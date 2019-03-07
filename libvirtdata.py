@@ -64,7 +64,11 @@ class DomainQuery():
         return '<DomainQuery: %s>' % (self.domain_db)
 
     def getVMOwner(vm_name, port):
+        #DomainQuery.log("checking for owner=%s, port=%s" % (vm_name, port))
         owner = ''
+
+        if port is None:
+            return ''
 
         cmd_list = ['ss', '-tn']
         try:
@@ -73,9 +77,8 @@ class DomainQuery():
             DomainQuery.log('Error while determining VM owner')
 
         test_str = cmd_result.decode('utf-8')
-        regex = r"^ESTAB.*\ \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:1" + port + ".*\ (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+        regex = r"^ESTAB.*\ \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:" + port + ".*\ (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
         matches = re.finditer(regex, test_str, re.MULTILINE)
-
         for matchNum, match in enumerate(matches, start=1):
             #print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
             for groupNum in range(0, len(match.groups())):
@@ -85,7 +88,7 @@ class DomainQuery():
                 #print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
 
         if owner != "":
-            DomainQuery.log('VM [%s] is in use by IP [%s]' % (vm_name, owner))
+            DomainQuery.log('VM [%s] is in use by IP [%s]:[%s]' % (vm_name, owner, port))
             return owner
         return ''
 
@@ -168,16 +171,19 @@ class DomainQuery():
             domain_data['vcpus'] = dom_vcpus
             domain_data['state'] = self.domainStates[int(dom_state)]
             domain_data['bridge'] = dom_host_bridge
-            if dom_spiceport != "<unknown>":
+            if dom_spiceport is not None and dom_spiceport != "<unknown>":
                 domain_data['spiceport'] = "1" + dom_spiceport
+                domain_data['spice_in_use_by'] = DomainQuery.getVMOwner(dom_name, "1" + dom_spiceport)
             else:
-                domain_data['spiceport']  = 'n/a'
+                domain_data['spiceport']  = ''
+                domain_data['spice_in_use_by'] = ''
             
             if dom_vncport is not None and dom_vncport != "<unknown>":
                 domain_data['vncport'] = "2" + dom_vncport
+                domain_data['vnc_in_use_by'] = DomainQuery.getVMOwner(dom_name, "2" + dom_vncport)
             else:
-                domain_data['vncport']  = 'n/a'
-
+                domain_data['vncport']  = ''
+                domain_data['vnc_in_use_by'] = ''
 
             domain_data['type'] = dom_type
             domain_data['osinfo'] = dom_osinfo
@@ -185,12 +191,6 @@ class DomainQuery():
             domain_data['install_date'] = dom_install_date
             domain_data['perfil'] = dom_perfil
             domain_data['object'] = dom
-
-            # check if the websocket port is in use
-            if dom_spiceport != '<unknown>' or dom_vncport != '<unknown>':
-                domain_data['in_use_by'] = DomainQuery.getVMOwner(dom_name, dom_spiceport)
-            else:
-                domain_data['in_use_by'] = ''
 
             #    pprint(domain_data)
 
@@ -328,7 +328,7 @@ class DomainQuery():
                 "execute":"guest-file-read",
                 "arguments":{
                     "handle": file_handle, 
-                    "count":65535
+                    "count":32768
                     }
                 }
         
