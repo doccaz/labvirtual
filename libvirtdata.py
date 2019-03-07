@@ -49,8 +49,7 @@ class DomainQuery():
         self.domain_db = []
         self.conn = None
 
-        # connect to the hypervisor
-        # inicializa logs
+        # connect to the hypervisor and init logs
         syslog.openlog('libvirt-python', syslog.LOG_PID, syslog.LOG_INFO)
         self.conn = libvirt.open(conn_uri)
         if self.conn == None:
@@ -62,6 +61,18 @@ class DomainQuery():
 
     def __repr__(self):
         return '<DomainQuery: %s>' % (self.domain_db)
+
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+    return IP
 
     def getVMOwner(vm_name, port):
         #DomainQuery.log("checking for owner=%s, port=%s" % (vm_name, port))
@@ -83,7 +94,7 @@ class DomainQuery():
             #print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
             for groupNum in range(0, len(match.groups())):
                 groupNum = groupNum + 1
-                if match.group(groupNum) != "127.0.0.1" and match.group(groupNum) != "172.18.88.44":
+                if match.group(groupNum) != "127.0.0.1" and match.group(groupNum) != get_ip():
                     owner = str(match.group(groupNum))
                 #print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
 
