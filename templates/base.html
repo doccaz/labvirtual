@@ -12,7 +12,7 @@
 	</head>
 	<body>
 		<p class="text-center h1">Laboratório Virtual</p>
-		<p class="text-center"><small>{{ timestamp }}</small></p>
+		<p class="text-center"><small>{{ timestamp }} | <b>{{ session['username'] }} </b> <a href="/labvirtual/logout">logout</a></small></p>
 		   <div class="justify-content-center">
 			   {% block content %}  {% endblock %}
 		   </div>

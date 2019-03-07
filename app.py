@@ -1,7 +1,7 @@
 import os
 import json
 import gettext
-from flask import Flask, request, jsonify, render_template, redirect, request
+from flask import Flask, request, jsonify, render_template, redirect, request, session, abort, flash
 from datetime import datetime
 from pprint import pprint
 from libvirtdata import DomainQuery
@@ -14,8 +14,15 @@ try:
 except FileNotFoundError as e:
     DomainQuery.log("no translation file available")
 
+app.secret_key = os.urandom(12)
 
 @app.route('/')
+def home():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        return index()
+
 def index():
 
     d = DomainQuery()
@@ -56,12 +63,27 @@ def restartvm():
         return render_template('restartvm.html', error='%s reset' % vm_name)
     
     
+@app.route('/logout')
+def logout():
+    session['logged_in'] = False
+    session['username'] = ''
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def do_admin_login():
+    if request.form['password'] == 'password' and request.form['username'] == 'admin':
+        session['logged_in'] = True
+        session['username'] = request.form['username']
+    else:
+        flash('wrong password!')
+    return index()
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     DomainQuery.close()
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 

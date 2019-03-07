@@ -6,6 +6,7 @@ import re
 import base64
 import subprocess
 import json
+import socket
 from subprocess import check_output, CalledProcessError
 from subprocess import PIPE
 from pprint import pprint
@@ -72,7 +73,7 @@ class DomainQuery():
             IP = '127.0.0.1'
         finally:
             s.close()
-    return IP
+        return IP
 
     def getVMOwner(vm_name, port):
         #DomainQuery.log("checking for owner=%s, port=%s" % (vm_name, port))
@@ -94,7 +95,7 @@ class DomainQuery():
             #print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
             for groupNum in range(0, len(match.groups())):
                 groupNum = groupNum + 1
-                if match.group(groupNum) != "127.0.0.1" and match.group(groupNum) != get_ip():
+                if match.group(groupNum) != "127.0.0.1" and match.group(groupNum) != DomainQuery.get_ip():
                     owner = str(match.group(groupNum))
                 #print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
 
