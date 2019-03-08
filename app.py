@@ -1,13 +1,15 @@
 import os
 import json
 import gettext
+import ldap
+import config as cfg
 from flask import Flask, request, jsonify, render_template, redirect, request, session, abort, flash
 from datetime import datetime
 from pprint import pprint
 from libvirtdata import DomainQuery
 app = Flask(__name__, instance_relative_config=True)
 
-# tranlation support
+# translation support
 try:
     import gettext
     gettext.install('labvirtual', '/usr/share/locale')
@@ -71,12 +73,36 @@ def logout():
 
 @app.route('/login', methods=['POST'])
 def do_admin_login():
-    if request.form['password'] == 'password' and request.form['username'] == 'admin':
-        session['logged_in'] = True
-        session['username'] = request.form['username']
-    else:
-        flash('wrong password!')
-    return redirect('/labvirtual', code=302)
+        if cfg.auth['auth_mode'] == 'ldap':
+            try:
+                conn = ldap.initialize(cfg.auth['LDAP_PROVIDER_URL'])
+                if conn is None:
+                    flash('error connecting to LDAP server')
+                else:
+                    DomainQuery.log('authentication options: certfile: %s, user=%s, search base=%s' % (cfg.auth['LDAP_CACERT'], request.form['username'], cfg.auth['LDAP_SEARCH_BASE']))
+                    conn.set_option(ldap.OPT_X_TLS, True)
+                    conn.set_option(ldap.OPT_X_TLS_CACERTFILE, cfg.auth['LDAP_CACERT'])
+                    conn.simple_bind_s('%s' % (cfg.auth['LDAP_BIND_DN']), cfg.auth['LDAP_AUTHTOK'])
+
+                    # do a search
+                    query = 'uid=%s' % request.form['username']
+                    result = conn.search_s(cfg.auth['LDAP_SEARCH_BASE'], ldap.SCOPE_SUBTREE, query)
+                    DomainQuery.log('result = [%s]' % result)
+
+                    session['logged_in'] = True
+                    session['username'] = request.form['username']
+            except Exception as e:
+                DomainQuery.log('authentication error: [%s], user=%s' % (e, request.form['username']))
+                flash('%s' % str(e))
+                session['logged_in'] = False
+        else:
+            if request.form['password'] == cfg.auth['default_password'] and request.form['username'] == cfg.auth['default_user']:
+                session['logged_in'] = True
+                session['username'] = request.form['username']
+            else:
+                flash('wrong password!')
+
+        return redirect('/labvirtual', code=302)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -84,6 +110,7 @@ def shutdown_session(exception=None):
 
 
 if __name__ == '__main__':
+
     app.run(debug=True)
 
 

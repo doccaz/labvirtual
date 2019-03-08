@@ -1,4 +1,16 @@
-<link rel="stylesheet" href="static/style.css" type="text/css">
+<!doctype html>
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+	<meta http-equiv="refresh" content="60">
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<link rel="stylesheet" href="static/style.css" type="text/css">
+	<title>Laboratorio Virtual</title>
+</head>
+
 {% block body %}
 {% if session['logged_in'] %}
 
@@ -10,7 +22,7 @@ You're logged in already!
 	<div class="login">
 		<div class="login-screen">
 			<div class="app-title">
-				<h1>Login</h1>
+				<h1>Laboratório Virtual</h1>
 			</div>
 			<div class="login-form">
 				<div class="control-group">
@@ -24,6 +36,9 @@ You're logged in already!
 			</div>
 		</div>
 	</div>
-</form>{% endif %}
+</form>
+{% endif %}
 {% endblock %}
+
+{% extends "statusmessages.html" %}
 
