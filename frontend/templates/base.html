@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+		<meta http-equiv="refresh" content="60">
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+		<title>Laboratorio Virtual</title>
+	</head>
+	<body>
+		<p class="text-center h1">Laboratório Virtual</p>
+		<p class="text-center"><small>{{ timestamp }} | <b>{{ current_user['displayname'] }} </b> <a href="/labvirtual/logout">logout</a></small></p>
+		   <div class="justify-content-center">
+			   {% block content %}  {% endblock %}
+		   </div>
+		</div>
+		<div class="footer text-center"><small><i>Problemas? Contacte erico.mendonca@suse.com</i></small></div>
+		<script src="{{ url_for('static', filename='bootstrap.min.js')}}"></script>
+		<script src="{{ url_for('static', filename='jquery-3.3.1.min.js')}}"></script>
+		<script src="{{ url_for('static', filename='custom.js')}}"></script>
+	</body>
+</html>
+
