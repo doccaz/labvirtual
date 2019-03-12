@@ -9,13 +9,12 @@ import gettext
 from datetime import datetime
 from pprint import pprint
 from backend.libvirtbridge import DomainQuery
-import config as cfg
 
 auth = Blueprint('auth', __name__)
 
 @login_manager.user_loader
 def load_user(id):
-    return User.query.get_id(int(id))
+    return User.query.get(int(id))
 
 @auth.before_request
 def get_current_user():
@@ -23,6 +22,7 @@ def get_current_user():
 
 @auth.route('/')
 @auth.route('/home')
+@login_required
 def home():
     d = DomainQuery()
     domain_db = d.get_data()
@@ -47,21 +47,34 @@ def login():
     if request.method == 'POST' and form.validate():
         username = request.form.get('username')
         password = request.form.get('password')
+
         try:
-            User.try_login(username, password)
+            displayname = ''
+            userdata = {}
+            displayname, userdata = User.try_login(username, password)
         except ldap.INVALID_CREDENTIALS:
             flash('Invalid username or password. Please try again.', 'danger')
             return render_template('login.html', form=form)
 
-        DomainQuery.log('user = %s, query = %s' % (User, User.query))
         user = User.query.filter_by(username=username).first()
         
         if user is None:
             user = User(username, password)
-            db.session.add(user)
-            db.session.commit()
-       
-        login_user(user)
+            DomainQuery.log('user not found, creating new record: user = %s, id = %s' % (user.username, user.id))
+        else:
+            DomainQuery.log('found user record for user %s, id = %s' % (user.displayname, user.id))
+      
+        user.set_displayname(displayname)
+        DomainQuery.log('setting last IP to: %s' % str(request.remote_addr))
+        user.set_last_ip(str(request.remote_addr))
+
+        # commit the user record to the database
+        db.session.add(user)
+        db.session.flush()
+        db.session.refresh(user)
+        db.session.commit()
+
+        login_user(user, force=True, remember=True)
         flash('You have successfully logged in.', 'success')
         return redirect(url_for('auth.home'))
 

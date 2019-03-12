@@ -139,3 +139,9 @@ input:focus {
 	color: #444;
 	display: block;
 	margin-top: 12px; 
+}
+
+.table-responsive {
+	overflow-x: visible;
+}
+

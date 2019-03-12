@@ -8,11 +8,11 @@
 		<!-- Bootstrap CSS -->
 		<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
 		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-		<title>Laboratorio Virtual</title>
+		<title>Laborat&oacute;rio Virtual</title>
 	</head>
 	<body>
 		<p class="text-center h1">Laboratório Virtual</p>
-		<p class="text-center"><small>{{ timestamp }} | <b>{{ current_user['displayname'] }} </b> <a href="/labvirtual/logout">logout</a></small></p>
+		<p class="text-center"><small>{{ timestamp }} | <b>{{ current_user['displayname'] }} ({{ current_user['last_ip'] }})</b> |<a id="logout" class="btn btn-link" style="color: lime;" href="/labvirtual/logout">logout</a></small></p>
 		   <div class="justify-content-center">
 			   {% block content %}  {% endblock %}
 		   </div>
