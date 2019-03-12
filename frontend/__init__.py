@@ -24,13 +24,11 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
-db = SQLAlchemy()
+db = SQLAlchemy(app)
 
 from frontend.auth.views import auth
 app.register_blueprint(auth)
 
-db.init_app(app)
-db.create_session(app)
 db.create_all()
 
 @app.teardown_appcontext

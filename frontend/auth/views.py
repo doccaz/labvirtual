@@ -54,12 +54,13 @@ def login():
             return render_template('login.html', form=form)
 
         DomainQuery.log('user = %s, query = %s' % (User, User.query))
-        if User.query is not None:
-            user = User.query.filter_by(username=username).first()
-        else:
+        user = User.query.filter_by(username=username).first()
+        
+        if user is None:
             user = User(username, password)
             db.session.add(user)
             db.session.commit()
+       
         login_user(user)
         flash('You have successfully logged in.', 'success')
         return redirect(url_for('auth.home'))
