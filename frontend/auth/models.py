@@ -4,12 +4,13 @@ from flask_login import LoginManager, login_required, UserMixin
 from flask_wtf import FlaskForm
 from wtforms import TextField, PasswordField
 from wtforms.validators import InputRequired, Length
-from frontend import app
+from frontend import db, app
 from backend.libvirtbridge import DomainQuery
 import config as cfg
 
-class User(UserMixin):
-    users = []
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100))
 
     def __init__(self, username, password):
         self.displayname = ''
@@ -18,21 +19,22 @@ class User(UserMixin):
         self.userdata = {}
 
     def try_login(username, password):
-            auth_mode = cfg.auth['auth_mode']
+            auth_mode = cfg.config['auth_mode']
             if auth_mode == 'ldap':
-                    conn = ldap.initialize(cfg.auth['LDAP_PROVIDER_URL'])
+                    conn = ldap.initialize(cfg.config['LDAP_PROVIDER_URL'])
                     if conn is None:
                         flash('error connecting to LDAP server')
                     else:
-                        DomainQuery.log('authentication options: certfile: %s, user=%s, password=%s, search base=%s' % (cfg.auth['LDAP_CACERT'], username, password, cfg.auth['LDAP_SEARCH_BASE']))
+                        DomainQuery.log('authentication options: certfile: %s, user=%s, password=%s, search base=%s' % (cfg.config['LDAP_CACERT'], username, password, cfg.config['LDAP_SEARCH_BASE']))
                         conn.set_option(ldap.OPT_X_TLS, True)
-                        conn.set_option(ldap.OPT_X_TLS_CACERTFILE, cfg.auth['LDAP_CACERT'])
-                        conn.simple_bind_s('%s' % (cfg.auth['LDAP_BIND_DN']), cfg.auth['LDAP_AUTHTOK'])
-                        #conn.simple_bind_s('uid=%s,%s' % (request.form['username'], cfg.auth['LDAP_BIND_DN']), request.form['password'])
+                        if cfg.config['LDAP_CACERT'] != '':
+                            conn.set_option(ldap.OPT_X_TLS_CACERTFILE, cfg.auth['LDAP_CACERT'])
+                        conn.simple_bind_s('%s,%s' % (cfg.config['LDAP_BIND_USER'], cfg.config['LDAP_BIND_DN']), cfg.config['LDAP_AUTHTOK'])
+                        #conn.simple_bind_s('uid=%s,%s' % (username, cfg.config['LDAP_BIND_DN']), password)
 
                         # do a search
                         query = 'uid=%s' % username
-                        #result = conn.search_s(cfg.auth['LDAP_SEARCH_BASE'], ldap.SCOPE_SUBTREE, query)
+                        #result = conn.search_s(cfg.config['LDAP_SEARCH_BASE'], ldap.SCOPE_SUBTREE, query)
                         #DomainQuery.log('result = [%s]' % result)
                         #if result:
                         #    self.userdata = result[0][1]
@@ -42,7 +44,7 @@ class User(UserMixin):
                         #    return False
 
             elif auth_mode == 'plain':
-                if password == cfg.auth['default_password'] and username == cfg.auth['default_user']:
+                if password == cfg.config['default_password'] and username == cfg.config['default_user']:
                     return True
                 else:
                     return False
@@ -61,12 +63,10 @@ class User(UserMixin):
     def get_displayname(self):
         return displayname
 
-    def get_id(user_id):
+    def get_id(self):
         return id
 
 class LoginForm(FlaskForm):
     username = TextField('login_user',  validators=[InputRequired(),  Length(max=30)])
     password = PasswordField('login_pass', validators=[InputRequired(), Length(min=8, max=20)])
-    username.label = 'Usuário'
-    password.label = 'Senha'
     
