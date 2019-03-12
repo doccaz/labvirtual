@@ -8,8 +8,7 @@ from backend.libvirtbridge import DomainQuery
 from frontend import app, db
 
 class User(db.Model):
-
-    id = db.Column(db.Integer, unique=True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100))
 
     def __init__(self, username, password):
