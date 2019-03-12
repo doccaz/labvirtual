@@ -12,4 +12,5 @@ config['LDAP_BIND_USER'] = ''
 config['LDAP_BIND_DN'] = ''
 config['LDAP_AUTHTOK'] = ''
 config['LDAP_SEARCH_BASE'] = ''
+config['LDAP_CACERT'] = ''
 

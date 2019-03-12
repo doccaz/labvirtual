@@ -10,6 +10,7 @@ from frontend import app, db
 class User(db.Model):
     username = db.Column(db.String(100), primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
+    displayname = db.Column(db.String(100))
     def __init__(self, username, password):
         self.username = username
 
@@ -32,7 +33,7 @@ class User(db.Model):
                         result = conn.search_s(app.config['LDAP_SEARCH_BASE'], ldap.SCOPE_SUBTREE, query)
                         DomainQuery.log('result = [%s]' % result)
                         if result:
-                            self.userdata = result[0][1]
+                            #self.userdata = result[0][1]
                             self.displayname = self.userdata['cn'][0].decode('utf-8')
                         else:
                             flash('authentication error')
