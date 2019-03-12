@@ -1,7 +1,7 @@
 import ldap
 from flask import request, render_template, flash, redirect, url_for, Blueprint, g, jsonify,  session, abort
 from flask_login import current_user, login_user, logout_user, login_required
-from frontend import db, login_manager
+from frontend import app, db, login_manager
 from frontend.auth.models import User, LoginForm
 import os
 import json
@@ -15,7 +15,7 @@ auth = Blueprint('auth', __name__)
 
 @login_manager.user_loader
 def load_user(id):
-    return User.get_id(int(id))
+    return User.query.get_id(int(id))
 
 @auth.before_request
 def get_current_user():
@@ -23,13 +23,9 @@ def get_current_user():
 
 @auth.route('/')
 @auth.route('/home')
-@login_required
 def home():
-    DomainQuery.log('cheguei 1')
     d = DomainQuery()
-    DomainQuery.log('cheguei 2')
     domain_db = d.get_data()
-    DomainQuery.log('cheguei 3')
 
     lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M:%S %p')
     return render_template('home.html', domain_data=domain_db, timestamp=lastUpdated)
@@ -57,9 +53,10 @@ def login():
             flash('Invalid username or password. Please try again.', 'danger')
             return render_template('login.html', form=form)
 
-        user = User.query.filter_by(username=username).first()
-
-        if not user:
+        DomainQuery.log('user = %s, query = %s' % (User, User.query))
+        if User.query is not None:
+            user = User.query.filter_by(username=username).first()
+        else:
             user = User(username, password)
             db.session.add(user)
             db.session.commit()
