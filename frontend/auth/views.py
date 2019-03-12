@@ -6,10 +6,9 @@ from frontend.auth.models import User, LoginForm
 import os
 import json
 import gettext
-import config as cfg
 from datetime import datetime
 from pprint import pprint
-from libvirtdata import DomainQuery
+from backend.libvirtbridge import DomainQuery
 import config as cfg
 
 auth = Blueprint('auth', __name__)
@@ -27,8 +26,11 @@ def get_current_user():
 @login_required
 def home():
 
+    DomainQuery.log('cheguei 1')
     d = DomainQuery()
+    DomainQuery.log('cheguei 2')
     domain_db = d.get_data()
+    DomainQuery.log('cheguei 3')
 
     lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M:%S %p')
     return render_template('home.html', domain_data=domain_db, timestamp=lastUpdated)

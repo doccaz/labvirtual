@@ -5,7 +5,7 @@ from flask_wtf import FlaskForm
 from wtforms import TextField, PasswordField
 from wtforms.validators import InputRequired, Length
 from frontend import app
-from libvirtdata import DomainQuery
+from backend.libvirtbridge import DomainQuery
 import config as cfg
 
 class User(UserMixin):

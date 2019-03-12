@@ -3,7 +3,9 @@
 <center>
 <p class=flashes>
 	{% for message in messages %}
-	<strong>{{ message }}</strong>
+		{% for key, value in message.items() %}
+		<strong>{{ value[0] }} </strong><br>
+		{% endfor %}
 	{% endfor %}
 </p>
 </center>

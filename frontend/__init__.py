@@ -1,7 +1,7 @@
 from flask import Flask
 import os
 import flask_login
-from libvirtdata import DomainQuery
+from backend.libvirtbridge import DomainQuery
 
 # translation support
 try:
