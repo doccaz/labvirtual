@@ -1,5 +1,5 @@
 {% with messages = get_flashed_messages() %}
-{% if messages %}
+{% if messages is mapping %}
 <center>
 <p class=flashes>
 	{% for message in messages %}
