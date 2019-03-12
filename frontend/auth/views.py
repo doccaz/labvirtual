@@ -1,11 +1,7 @@
 import ldap
 from flask import request, render_template, flash, redirect, url_for, Blueprint, g, jsonify,  session, abort
 from flask_login import current_user, login_user, logout_user, login_required
-<<<<<<< HEAD
 from frontend import app, db, login_manager
-=======
-from frontend import db, login_manager
->>>>>>> 7f2b691f0cf3c803a295ccc425854f654185402d
 from frontend.auth.models import User, LoginForm
 import os
 import json
