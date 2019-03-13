@@ -63,7 +63,7 @@
 							{% endif %}
 						{% else %}
 						  	{% if domain.spiceport != "" %}
-								<td> <div class="btn btn-warning"><a href="http://{{ request.host.split(':')[0] }}/spice-web/index.html?host={{ request.host.split(':')[0] }}&port={{ domain.spiceport }}&ip_addr={{ domain.nics }}&vm_name={{ domain.name }}&arch={{ domain.arch }}" target='_blank'>spice console</a></div></td>
+								<td> <div class="btn btn-warning"><a href="http://{{ request.host.split(':')[0] }}/spice-web-client/index.html?host={{ request.host.split(':')[0] }}&port={{ domain.spiceport }}&ip_addr={{ domain.nics }}&vm_name={{ domain.name }}&arch={{ domain.arch }}" target='_blank'>spice console</a></div></td>
 							  {% else %}
 								<td>-- no spice console --</td>
 				        		  {% endif %}
