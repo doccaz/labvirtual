@@ -9,6 +9,7 @@ import gettext
 from datetime import datetime
 from pprint import pprint
 from backend.libvirtbridge import DomainQuery
+from backend.utils import process_exception
 
 auth = Blueprint('auth', __name__)
 
@@ -24,8 +25,11 @@ def get_current_user():
 @auth.route('/home')
 @login_required
 def home():
-    d = DomainQuery()
-    domain_db = d.get_data()
+    try:
+        d = DomainQuery()
+        domain_db = d.get_data()
+    except Exception as e:
+        return render_template('error.html', errorinfo=process_exception(e))
 
     lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M:%S %p')
     return render_template('home.html', domain_data=domain_db, timestamp=lastUpdated)
@@ -116,5 +120,12 @@ def restartvm():
 
 
 
+@auth.route('/showerror')
+def show_error():
+    
+    error=process_exception(exception)
+
+    DomainQuery.log('Fatal error: showing error page (%s)' % error['title'])
+    return render_template('error.html', errorinfo=error)
 
 

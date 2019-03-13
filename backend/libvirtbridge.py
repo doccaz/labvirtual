@@ -11,6 +11,7 @@ from subprocess import check_output, CalledProcessError
 from subprocess import PIPE
 from pprint import pprint
 from lxml import etree
+import backend.utils
 
 class DomainQuery():
     domainStates = { 
@@ -29,6 +30,7 @@ class DomainQuery():
     ''' 
     Funcao basica de log 
     ''' 
+    @staticmethod
     def log(msg): 
         syslog.syslog(msg) 
         print(msg) 
@@ -52,11 +54,12 @@ class DomainQuery():
 
         # connect to the hypervisor and init logs
         syslog.openlog('libvirt-python', syslog.LOG_PID, syslog.LOG_INFO)
-        self.conn = libvirt.open(conn_uri)
-        if self.conn == None:
-            DomainQuery.log('Error connecting to hypervisor')
-            return False
-
+        try:
+            self.conn = libvirt.open(conn_uri)
+        except libvirt.libvirtError as e:
+            DomainQuery.log('Error connecting to hypervisor: %s' % str(e))
+            raise Exception('Please make sure the libvirtd service is up and running.\nAlso remember to add wwwrun (or the user your webserver runs with) to the libvirt group.').with_traceback(e.__traceback__)
+            
         DomainQuery.log('New connection to libvirtd: %s' % self.conn )
         return None
 
@@ -111,8 +114,8 @@ class DomainQuery():
         try:
             domains = self.conn.listAllDomains()
         except Exception as e:
-            log ('Failure while obtaining domain list: %s' % e)
-            return None
+            DomainQuery.log('Failure while obtaining domain list: %s' % e)
+            raise Exception('It appears there are no virtual machines defined. Please create one and try again.').with_traceback(e.__traceback__)
         
         # fetch domain data
         for dom in domains:
