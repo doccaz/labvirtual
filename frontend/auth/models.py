@@ -38,17 +38,17 @@ class User(db.Model):
                         if result:
                             userdata = result[0][1]
                             displayname  = userdata['cn'][0].decode('utf-8')
-                            return (displayname, userdata)
+                            return (True, displayname, userdata)
                         else:
                             flash('authentication error')
-                            return ('', {})
+                            return (False, '', {})
 
             elif app.config['auth_mode'] == 'plain':
                 if password == app.config['default_password'] and username == app.config['default_user']:
                     displayname = app.config['default_user']
-                    return  (displayname, {})
+                    return  (True, displayname, {})
                     
-            return ('', {})
+            return (False, '', {})
 
     def is_authenticated(self):
         return True

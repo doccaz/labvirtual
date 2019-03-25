@@ -55,8 +55,13 @@ def login():
         try:
             displayname = ''
             userdata = {}
-            displayname, userdata = User.try_login(username, password)
+            authenticated = False
+            authenticated, displayname, userdata = User.try_login(username, password)
         except ldap.INVALID_CREDENTIALS:
+            flash('Invalid username or password. Please try again.', 'danger')
+            return render_template('login.html', form=form)
+
+        if not authenticated:
             flash('Invalid username or password. Please try again.', 'danger')
             return render_template('login.html', form=form)
 
