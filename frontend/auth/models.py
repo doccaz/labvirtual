@@ -13,6 +13,7 @@ class User(db.Model):
     username = db.Column(db.String(100))
     displayname = db.Column(db.String(100))
     last_ip = db.Column(db.String(50))
+    last_active = db.Column(db.DateTime(), default=db.func.now())
 
     def __init__(self, username, password):
         self.username = username
@@ -47,7 +48,7 @@ class User(db.Model):
                 if password == app.config['default_password'] and username == app.config['default_user']:
                     displayname = app.config['default_user']
                     return  (True, displayname, {})
-                    
+        
             return (False, '', {})
 
     def is_authenticated(self):
