@@ -144,14 +144,20 @@ class DomainQuery():
                     dom_agent = False
                     #DomainQuery.log('VM %s does not have a QEMU agent installed' % dom_name)
 
-                if (ifaces == None):
+                if (ifaces == None) or (ifaces == "none") or (ifaces == ""):
                     dom_nics = 'none'
                 else:
                     DomainQuery.log('VM %s does have a QEMU agent installed' % dom_name)
                     dom_agent = True
                     try:
                         # if it's Linux, go for eth0
-                        dom_nics = ifaces['eth0']['addrs'][0]['addr'] + '/' + str(ifaces['eth0']['addrs'][0]['prefix'])
+                        dom_nics = ''
+
+                        if ifaces['eth0']['addrs'] == None:
+                            dom_nics = 'none assigned'
+                        else:
+                            for addr in ifaces['eth0']['addrs']:
+                                dom_nics += addr['addr'] + '/' + str(addr['prefix']) + '\n'
                         dom_type = "linux"
                     except KeyError as e:
                         # else it might be a windows VM, try the "Local Connection" interfaces
@@ -165,7 +171,6 @@ class DomainQuery():
                 dom_vcpus = 0
                 dom_nics = 'n/a'
 
-
             # determine system version
             if dom_agent:
                 dom_osinfo = DomainQuery.getOSVersion(dom_name, dom_type)
@@ -175,7 +180,6 @@ class DomainQuery():
                 dom_osinfo = 'n/a'
                 dom_install_date = 'n/a'
                 dom_perfil = 'n/a'
-
 
             domain_data = {}
             domain_data['id'] = dom.ID()
@@ -207,10 +211,10 @@ class DomainQuery():
             domain_data['perfil'] = dom_perfil
             domain_data['object'] = dom
 
-            #    pprint(domain_data)
-
             self.domain_db.append(domain_data)
-           # pprint(self.domain_db)
+            # DEBUG only!
+            # pprint(domain_data)
+            # pprint(self.domain_db)
 
         return self.domain_db
 

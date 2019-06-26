@@ -10,6 +10,7 @@ from datetime import datetime
 from pprint import pprint
 from backend.libvirtbridge import DomainQuery
 from backend.utils import process_exception
+import traceback, sys
 
 auth = Blueprint('auth', __name__)
 
@@ -29,7 +30,7 @@ def home():
         d = DomainQuery()
         domain_db = d.get_data()
     except Exception as e:
-        return render_template('error.html', errorinfo=process_exception(e))
+        return render_template('error.html', errorinfo=traceback.print_exc())
 
     lastUpdated = datetime.strftime(datetime.now(), 'atualizado em %d-%m-%Y %H:%M:%S %p')
     return render_template('home.html', domain_data=domain_db, timestamp=lastUpdated)
