@@ -51,11 +51,18 @@ If you're not using LDAP, just set the auth_mode to "plain" and use the default 
 
 5. Include the QEMU hook to allow for automatic firewall rule creation (and websocket redirects!)
 ```
-# cp qemu-hook-script /etc/libvirt/hooks/qemu
+# cp qemu-hook-script-python /etc/libvirt/hooks/qemu
 ```
 
 You can find this script here: https://github.com/doccaz/kvm-scripts
 
+Note that this script will create websocket redirects based on what it can find from the VM details. For example, if there is SPICE device (should be default), it'll start a local websocket server that listens on TCP port <SPICE port defined in the VM> + 20000. If it finds a VNC device defined in the VM, it'll start a websocket server on local TCP port <VNC port defined in the VM> + 10000. These will auto-generate "spice console" and "vnc console" buttons in the WebUI, and automatically add the proper iptables rules on the host. Clicking on these buttons will bring up a web-based client to access the VM's console. These are based on the noVNC and spice-web projects.
+
+This is what the WebUI looks like:
+  
+  ![image](https://user-images.githubusercontent.com/18707695/149360928-b4eb74b5-b7a5-4ffd-94d1-9c13e0fb1577.png)
+
+  
 6. Add the wwwrun user to the "libvirt" group with "vigr". Just add "wwwrun" to the end of the respective line.
 (or use the equivalent HTTP daemon user for your distro)
 
